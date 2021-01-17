@@ -1,9 +1,11 @@
 using AutoMapper;
 using DesignPatternSamples.Application.Decorators;
+using DesignPatternSamples.Application.DTO;
 using DesignPatternSamples.Application.Implementations;
 using DesignPatternSamples.Application.Repository;
 using DesignPatternSamples.Application.Services;
 using DesignPatternSamples.Infra.Repository.Detran;
+using DesignPatternSamples.Infra.Repository.Detran.PontosCarteira;
 using DesignPatternSamples.WebAPI.Middlewares;
 using DesignPatternSamples.WebAPI.Models;
 using Microsoft.AspNetCore.Builder;
@@ -89,6 +91,8 @@ namespace DesignPatternSamples.WebAPI
 
             app.UseDetranVerificadorDebitosFactory();
 
+            app.UseDetranVerificadorPontosCarteiraFactory();
+
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             app.UseMvc();
@@ -107,8 +111,13 @@ namespace DesignPatternSamples.WebAPI
                 .AddTransient<DetranPEVerificadorDebitosRepository>()
                 .AddTransient<DetranSPVerificadorDebitosRepository>()
                 .AddTransient<DetranRJVerificadorDebitosRepository>()
-                .AddTransient<DetranRSVerificadorDebitosRepository>()
-                .AddScoped<ExceptionHandlingMiddleware>();
+                .AddTransient<DetranRSVerificadorDebitosRepository>()                
+
+                .AddTransient<IDetranVerificadorPontosCarteiraService, DetranVerificadorPontosCarteiraServices>()
+                .Decorate<IDetranVerificadorPontosCarteiraService, DetranVerificadorPontosCarteiraDecoratorCache>()
+                .AddSingleton<IDetranVerificadorPontosCarteiraFactory, DetranVerificadorPontosCarteiraFactory>()
+                .AddTransient<DetranPEVerificadorPontosCarteiraRepository>()                
+                .AddScoped<ExceptionHandlingMiddleware>();            
         }
 
         public static IServiceCollection AddAutoMapper(this IServiceCollection services)
@@ -130,6 +139,15 @@ namespace DesignPatternSamples.WebAPI
                 .Register("RJ", typeof(DetranRJVerificadorDebitosRepository))
                 .Register("SP", typeof(DetranSPVerificadorDebitosRepository))
                 .Register("RS", typeof(DetranRSVerificadorDebitosRepository));
+
+            return app;
+        }
+        public static IApplicationBuilder UseDetranVerificadorPontosCarteiraFactory(this IApplicationBuilder app)
+        {
+            app.ApplicationServices.GetService<IDetranVerificadorPontosCarteiraFactory>()
+                .Register("089.366.456.20", typeof(DetranPEVerificadorDebitosRepository))
+                .Register("089.366.456.21", typeof(DetranPEVerificadorDebitosRepository))
+                .Register("089.366.456.22", typeof(DetranPEVerificadorDebitosRepository));
 
             return app;
         }
